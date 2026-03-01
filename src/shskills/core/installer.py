@@ -235,8 +235,8 @@ def install(
 
     existing_manifest = read_manifest(dest_path)
 
-    with fetch_skills_tree(url, ref, subpath) as skills_root:
-        skills = discover_skills(skills_root, subpath)
+    with fetch_skills_tree(source) as skills_root:
+        skills = discover_skills(skills_root, source.subpath)
 
         if not skills:
             logger.warning(

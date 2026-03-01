@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from shskills.core.planner import _dest_rel, _source_rel, discover_skills
+from shskills.core.planner import _dest_rel, _sanitize_segment, _source_rel, discover_skills
 from tests.conftest import write_skill
 
 # ---------------------------------------------------------------------------
@@ -14,12 +14,32 @@ from tests.conftest import write_skill
 # ---------------------------------------------------------------------------
 
 
+class TestSanitizeSegment:
+    def test_passthrough_clean(self) -> None:
+        assert _sanitize_segment("welcome_note") == "welcome_note"
+
+    def test_double_underscore_collapsed(self) -> None:
+        assert _sanitize_segment("my__skill") == "my_skill"
+
+    def test_triple_underscore_collapsed(self) -> None:
+        assert _sanitize_segment("aws___group") == "aws_group"
+
+    def test_many_underscores_collapsed(self) -> None:
+        assert _sanitize_segment("a____b") == "a_b"
+
+    def test_no_underscores_unchanged(self) -> None:
+        assert _sanitize_segment("authenticate") == "authenticate"
+
+
 class TestDestRel:
     def test_simple(self) -> None:
         assert _dest_rel("welcome_note", None) == "welcome_note"
 
     def test_nested(self) -> None:
-        assert _dest_rel("common/welcome_note", None) == "common/welcome_note"
+        assert _dest_rel("common/welcome_note", None) == "common__welcome_note"
+
+    def test_deeply_nested(self) -> None:
+        assert _dest_rel("aws/auth/authenticate_skill", None) == "aws_auth__authenticate_skill"
 
     def test_dot_with_subpath(self) -> None:
         # subpath pointed directly at the skill dir
@@ -30,6 +50,15 @@ class TestDestRel:
 
     def test_nested_subpath_with_dot(self) -> None:
         assert _dest_rel(".", "tools/deploy") == "deploy"
+
+    def test_sanitizes_double_underscore_in_leaf(self) -> None:
+        assert _dest_rel("my__skill", None) == "my_skill"
+
+    def test_sanitizes_double_underscore_in_prefix(self) -> None:
+        assert _dest_rel("common/my__skill", None) == "common__my_skill"
+
+    def test_sanitizes_double_underscore_in_group_segment(self) -> None:
+        assert _dest_rel("aws___group/skill", None) == "aws_group__skill"
 
 
 # ---------------------------------------------------------------------------
@@ -68,9 +97,9 @@ class TestDiscoverSkills:
         write_skill(tmp_path / "group_b", "skill_2")
 
         skills = discover_skills(tmp_path, subpath=None)
-        names = {s.name for s in skills}
-        assert "skill_1" in names
-        assert "skill_2" in names
+        rel_paths = {s.rel_path for s in skills}
+        assert "group_a__skill_1" in rel_paths
+        assert "group_b__skill_2" in rel_paths
 
     def test_empty_tree_returns_empty(self, tmp_path: Path) -> None:
         assert discover_skills(tmp_path, subpath=None) == []

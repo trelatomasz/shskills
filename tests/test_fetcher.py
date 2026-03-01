@@ -99,12 +99,12 @@ class TestFetchSkillsTree:
             m.returncode = 0
             return m
 
+        from shskills.models import SkillSource
+
         with patch("shskills.core.fetcher._run", side_effect=fake_run):
             with pytest.raises(FetchError, match="not found"):
                 with fetch_skills_tree(
-                    url="https://example.com/repo.git",
-                    ref="main",
-                    subpath=None,
+                    SkillSource(url="https://example.com/repo.git", ref="main")
                 ) as _:
                     pass
 
@@ -123,8 +123,10 @@ class TestFetchSkillsTree:
             m.returncode = 0
             return m
 
+        from shskills.models import SkillSource
+
         with patch("shskills.core.fetcher._run", side_effect=fake_run):
-            with fetch_skills_tree("https://example.com/repo.git", "main", None) as p:
+            with fetch_skills_tree(SkillSource(url="https://example.com/repo.git", ref="main")) as p:
                 created_skills_path.append(p)
 
         assert len(created_skills_path) == 1
@@ -145,9 +147,11 @@ class TestFetchSkillsTree:
             m.returncode = 0
             return m
 
+        from shskills.models import SkillSource
+
         with pytest.raises(FetchError):
             with patch("shskills.core.fetcher._run", side_effect=fake_run):
-                with fetch_skills_tree("https://example.com/r.git", "main", None) as _:
+                with fetch_skills_tree(SkillSource(url="https://example.com/r.git", ref="main")) as _:
                     pass
 
         # The tmpdir should have been cleaned up by TemporaryDirectory context manager

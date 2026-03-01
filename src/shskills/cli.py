@@ -69,7 +69,7 @@ def _setup_logging(verbose: bool) -> None:
 
 
 @app.command("install")
-def cmd_install(
+def   cmd_install(
     url: Annotated[str, typer.Option("--url", "-u", help="Git repository URL.")],
     agent: _AgentArg = "claude",
     subpath: Annotated[
@@ -104,6 +104,11 @@ def cmd_install(
 ) -> None:
     """Fetch and install skills from a remote repository."""
     _setup_logging(verbose)
+    logger = logging.getLogger(__name__)
+    logger.debug(
+        "install url=%s agent=%s subpath=%s ref=%s dest=%s dry_run=%s force=%s clean=%s strict=%s",
+        url, agent, subpath, ref, dest, dry_run, force, clean, strict,
+    )
 
     from shskills.core.installer import install
 
@@ -176,7 +181,9 @@ def cmd_install(
 
 @app.command("list")
 def cmd_list(
-    url: Annotated[str, typer.Option("--url", "-u", help="Git repository URL.")],
+    url: Annotated[str,
+        typer.Option("--url", "-u", help="Git repository URL.")]
+    = "git@github.com:trelatomasz/shareable-skills.git",
     subpath: Annotated[
         Optional[str],
         typer.Option("--subpath", "-s", help="Path relative to SKILLS/ to list."),
@@ -192,6 +199,8 @@ def cmd_list(
 ) -> None:
     """List available skills in a remote repository."""
     _setup_logging(verbose)
+    logger = logging.getLogger(__name__)
+    logger.debug("list url=%s subpath=%s ref=%s", url, subpath, ref)
 
     from shskills.core.planner import list_skills
 
@@ -232,6 +241,8 @@ def cmd_installed(
     dest: _DestArg = None,
 ) -> None:
     """List skills that are currently installed for an agent."""
+    logger = logging.getLogger(__name__)
+    logger.debug("installed agent=%s dest=%s", agent, dest)
     from shskills.core.manifest import installed_skills
 
     try:
@@ -272,6 +283,8 @@ def cmd_doctor(
     dest: _DestArg = None,
 ) -> None:
     """Check the health of installed skills for an agent."""
+    logger = logging.getLogger(__name__)
+    logger.debug("doctor agent=%s dest=%s", agent, dest)
     from shskills.core.installer import doctor
     from shskills.models import DoctorSeverity
 
@@ -318,3 +331,7 @@ def _version_callback(
     if version:
         rprint(f"shskills {__version__}")
         raise typer.Exit()
+
+
+if __name__ == "__main__":
+    app()

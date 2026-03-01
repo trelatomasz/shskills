@@ -10,6 +10,7 @@ from pathlib import Path
 
 from shskills.config import SKILLS_ROOT
 from shskills.exceptions import FetchError
+from shskills.models import SkillSource
 
 
 # ---------------------------------------------------------------------------
@@ -93,15 +94,13 @@ def _fetch_at_sha(url: str, sha: str, dest: Path, sparse_target: str) -> None:
 
 
 @contextmanager
-def fetch_skills_tree(url: str, ref: str, subpath: str | None) -> Iterator[Path]:
+def fetch_skills_tree(source: SkillSource) -> Iterator[Path]:
     """Clone the remote repo (sparse) and yield the local SKILLS/<subpath> path.
 
     The temporary directory is always cleaned up on exit regardless of errors.
 
     Args:
-        url:      Git repository URL.
-        ref:      Branch name, tag, or full commit SHA.
-        subpath:  Path relative to SKILLS/ to limit the checkout.
+        source:  SkillSource describing the repository URL, ref, and subpath.
 
     Yields:
         Absolute Path to the fetched skills root (SKILLS/<subpath> or SKILLS/).
@@ -109,20 +108,20 @@ def fetch_skills_tree(url: str, ref: str, subpath: str | None) -> Iterator[Path]
     Raises:
         FetchError: if git operations fail or the expected path is absent.
     """
-    target = _sparse_target(subpath)
+    target = _sparse_target(source.subpath)
 
     with tempfile.TemporaryDirectory(prefix="shskills-") as tmpdir:
         tmp = Path(tmpdir)
 
-        if _is_commit_sha(ref):
-            _fetch_at_sha(url, ref, tmp, target)
+        if _is_commit_sha(source.ref):
+            _fetch_at_sha(source.url, source.ref, tmp, target)
         else:
-            _fetch_branch_or_tag(url, ref, tmp, target)
+            _fetch_branch_or_tag(source.url, source.ref, tmp, target)
 
         skills_path = tmp / target
         if not skills_path.exists():
             raise FetchError(
-                f"Path '{target}' not found in repository '{url}' at ref '{ref}'"
+                f"Path '{target}' not found in repository '{source.url}' at ref '{source.ref}'"
             )
 
         yield skills_path

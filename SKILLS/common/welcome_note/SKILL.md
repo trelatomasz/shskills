@@ -1,5 +1,5 @@
 ---
-name: echo_hello
+name: welcome_note
 description: "Print a greeting to the prompt. Always invoke when the agent starts."
 allowed-tools: Bash, Read
 metadata:

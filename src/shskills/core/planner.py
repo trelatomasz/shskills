@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
 from shskills.config import SKILL_MARKER, SKILLS_ROOT
@@ -19,15 +20,38 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _dest_rel(rel: str, subpath: str | None) -> str:
-    """Compute the destination relative path within the agent dest dir.
+def _sanitize_segment(segment: str) -> str:
+    """Collapse two or more consecutive underscores in a path segment to one."""
+    return re.sub(r"_{2,}", "_", segment)
 
-    When the fetched root *is* the skill dir (rel == "."), use the basename
-    of the subpath so the skill is installed as a named directory.
+
+def _dest_rel(rel: str, subpath: str | None) -> str:
+    """Compute the flat destination name within the agent dest dir.
+
+    Path segments are joined: intermediary parts with ``_``, then a ``__``
+    separator before the skill-name leaf.  Each segment is sanitised to
+    collapse runs of consecutive underscores to a single underscore, so
+    that ``__`` in the result is always and only the group/name separator.
+
+    Examples::
+
+        "common/welcome_note"         -> "common__welcome_note"
+        "aws/auth/authenticate_skill" -> "aws_auth__authenticate_skill"
+        "welcome_note"                -> "welcome_note"
+        "." with subpath="common/s"   -> "s"
     """
     if rel == ".":
-        return Path(subpath).name if subpath else "skill"
-    return rel
+        raw = Path(subpath).name if subpath else "skill"
+        return _sanitize_segment(raw)
+
+    parts = Path(rel).parts
+    sanitized = [_sanitize_segment(p) for p in parts]
+
+    if len(sanitized) == 1:
+        return sanitized[0]
+
+    prefix = "_".join(sanitized[:-1])
+    return f"{prefix}__{sanitized[-1]}"
 
 
 def _source_rel(rel: str, subpath: str | None) -> str:
@@ -104,7 +128,7 @@ def list_skills(url: str, subpath: str | None = None, ref: str = "main") -> list
         List of SkillInfo objects, sorted by their destination relative path.
     """
     source = SkillSource(url=url, ref=ref, subpath=subpath)
-    _ = source  # validated; used for type checking only
+    logger.info("Listing skills url=%s subpath=%s ref=%s", url, subpath, ref)
 
-    with fetch_skills_tree(url, ref, subpath) as skills_root:
-        return discover_skills(skills_root, subpath)
+    with fetch_skills_tree(source) as skills_root:
+        return discover_skills(skills_root, source.subpath)

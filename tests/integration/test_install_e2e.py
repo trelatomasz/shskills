@@ -46,8 +46,8 @@ class TestBasicInstall:
         dest = tmp_path / ".claude" / "skills"
         install(url=_url(git_skills_repo), agent="claude", dest=dest)
 
-        assert (dest / "common" / "welcome_note" / "SKILL.md").exists()
-        assert (dest / "aws" / "scale_up" / "SKILL.md").exists()
+        assert (dest / "common__welcome_note" / "SKILL.md").exists()
+        assert (dest / "aws__scale_up" / "SKILL.md").exists()
 
     def test_manifest_is_written(self, git_skills_repo: Path, tmp_path: Path) -> None:
         dest = tmp_path / ".claude" / "skills"
@@ -57,8 +57,8 @@ class TestBasicInstall:
         assert manifest is not None
         assert manifest.agent == "claude"
         assert len(manifest.skills) == 2
-        assert "common/welcome_note" in manifest.skills
-        assert "aws/scale_up" in manifest.skills
+        assert "common__welcome_note" in manifest.skills
+        assert "aws__scale_up" in manifest.skills
 
     def test_manifest_records_source_url(self, git_skills_repo: Path, tmp_path: Path) -> None:
         dest = tmp_path / ".claude" / "skills"
@@ -92,11 +92,11 @@ class TestIdempotency:
         dest = tmp_path / ".claude" / "skills"
         install(url=_url(git_skills_repo), agent="claude", dest=dest)
 
-        sha1 = read_manifest(dest).skills["common/welcome_note"].content_sha256  # type: ignore[union-attr]
+        sha1 = read_manifest(dest).skills["common__welcome_note"].content_sha256  # type: ignore[union-attr]
 
         install(url=_url(git_skills_repo), agent="claude", dest=dest)
 
-        sha2 = read_manifest(dest).skills["common/welcome_note"].content_sha256  # type: ignore[union-attr]
+        sha2 = read_manifest(dest).skills["common__welcome_note"].content_sha256  # type: ignore[union-attr]
         assert sha1 == sha2
 
 
@@ -172,7 +172,7 @@ class TestConflicts:
         _git(git_skills_repo, "commit", "-m", "update welcome_note")
 
         result = install(url=_url(git_skills_repo), agent="claude", dest=dest)
-        assert "common/welcome_note" in result.conflicts
+        assert "common__welcome_note" in result.conflicts
 
     def test_force_resolves_conflict(
         self, git_skills_repo: Path, tmp_path: Path
@@ -192,7 +192,7 @@ class TestConflicts:
         result = install(
             url=_url(git_skills_repo), agent="claude", dest=dest, force=True
         )
-        assert "common/welcome_note" in result.updated
+        assert "common__welcome_note" in result.updated
         assert result.conflicts == []
 
 
@@ -231,7 +231,7 @@ class TestClean:
 
         # Install all skills (common + aws)
         install(url=_url(git_skills_repo), agent="claude", dest=dest)
-        assert (dest / "aws" / "scale_up").exists()
+        assert (dest / "aws__scale_up").exists()
 
         # Re-install with --subpath common --clean (aws/scale_up becomes orphaned)
         result = install(
@@ -243,8 +243,8 @@ class TestClean:
             force=True,
         )
 
-        assert "aws/scale_up" in result.cleaned
-        assert not (dest / "aws" / "scale_up").exists()
+        assert "aws__scale_up" in result.cleaned
+        assert not (dest / "aws__scale_up").exists()
 
     def test_no_clean_without_flag(
         self, git_skills_repo: Path, tmp_path: Path
@@ -256,8 +256,8 @@ class TestClean:
         result = install(url=_url(git_skills_repo), agent="claude", dest=dest)
 
         assert result.cleaned == []
-        assert (dest / "aws" / "scale_up").exists()
-        assert (dest / "common" / "welcome_note").exists()
+        assert (dest / "aws__scale_up").exists()
+        assert (dest / "common__welcome_note").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -275,8 +275,8 @@ class TestLayoutStructure:
         assert (dest / MANIFEST_FILENAME).exists()
 
         # Skill directories with SKILL.md
-        assert (dest / "common" / "welcome_note" / "SKILL.md").is_file()
-        assert (dest / "aws" / "scale_up" / "SKILL.md").is_file()
+        assert (dest / "common__welcome_note" / "SKILL.md").is_file()
+        assert (dest / "aws__scale_up" / "SKILL.md").is_file()
 
         # No temp files left over
         assert not list(dest.glob(".manifest-*.tmp"))
