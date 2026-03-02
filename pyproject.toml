@@ -21,9 +21,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Utilities",
 ]
-[project.urls]
-Homepage = "https://github.com/trelatomasz/shareable-skills"
-Issues = "https://github.com/trelatomasz/shareable-skills/issues"
 
 dependencies = [
     "typer>=0.12",
