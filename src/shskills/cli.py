@@ -317,6 +317,79 @@ def cmd_doctor(
 
 
 # ---------------------------------------------------------------------------
+# uninstall
+# ---------------------------------------------------------------------------
+
+
+@app.command("uninstall")
+def cmd_uninstall(
+    agent: _AgentArg = "claude",
+    dest: _DestArg = None,
+    name: Annotated[
+        Optional[str],
+        typer.Option("--name", "-n", help="Skill name to remove (part after '__')."),
+    ] = None,
+    prefix: Annotated[
+        Optional[str],
+        typer.Option(
+            "--prefix",
+            "-p",
+            help="Remove all skills whose prefix starts with this value.",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Plan without removing any files."),
+    ] = False,
+) -> None:
+    """Remove installed skills by name and/or prefix.
+
+    Skill keys follow the format ``<prefix>__<skillname>``.  You may filter
+    by either part independently or combine both flags.
+
+    When --name is given without --prefix and multiple prefixes own a skill
+    with that name the command fails and asks you to add --prefix.
+    """
+    if name is None and prefix is None:
+        err_console.print("Error: specify at least --name or --prefix.")
+        raise typer.Exit(code=1)
+
+    from shskills.core.installer import uninstall
+
+    try:
+        result = uninstall(
+            agent=agent,
+            name=name,
+            prefix=prefix,
+            dest=dest,
+            dry_run=dry_run,
+        )
+    except (ConfigError, InstallError, ManifestError) as exc:
+        err_console.print(f"Error: {exc}")
+        raise typer.Exit(code=1) from exc
+    except ShskillsError as exc:
+        err_console.print(f"Unexpected error: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    pfix = "[dim][dry-run][/dim] " if dry_run else ""
+
+    if not result.cleaned and not result.errors:
+        rprint("[dim]No matching skills found.[/dim]")
+        return
+
+    for s in result.cleaned:
+        rprint(f"{pfix}[yellow]removed[/yellow]    {s}")
+    for s in result.errors:
+        rprint(f"[bold red]error[/bold red]      {s}")
+
+    if result.cleaned:
+        rprint(f"[yellow]{len(result.cleaned)} removed[/yellow]")
+
+    if result.errors:
+        raise typer.Exit(code=1)
+
+
+# ---------------------------------------------------------------------------
 # version
 # ---------------------------------------------------------------------------
 

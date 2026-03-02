@@ -284,6 +284,106 @@ def install(
 
 
 # ---------------------------------------------------------------------------
+# Public API: uninstall
+# ---------------------------------------------------------------------------
+
+
+def _parse_skill_key(dest_rel: str) -> tuple[str, str]:
+    """Split 'prefix__skillname' → (prefix, skillname).
+
+    If there is no ``__`` separator the whole string is treated as the skill
+    name and the prefix is an empty string.
+    """
+    idx = dest_rel.find("__")
+    if idx == -1:
+        return "", dest_rel
+    return dest_rel[:idx], dest_rel[idx + 2:]
+
+
+def _key_matches(dest_rel: str, name: str | None, prefix: str | None) -> bool:
+    prefix_part, skill_part = _parse_skill_key(dest_rel)
+    if name is not None and skill_part != name:
+        return False
+    if prefix is not None and not prefix_part.startswith(prefix):
+        return False
+    return True
+
+
+def uninstall(
+    agent: str,
+    name: str | None = None,
+    prefix: str | None = None,
+    dest: Path | None = None,
+    dry_run: bool = False,
+) -> InstallResult:
+    """Remove installed skills matching *name* and/or *prefix*.
+
+    Args:
+        agent:    Target agent (determines default destination).
+        name:     Skill name to match (the part after ``__``).
+        prefix:   Prefix filter; matches any installed-skill key whose prefix
+                  *starts with* this string.
+        dest:     Override the default destination directory.
+        dry_run:  Plan without removing any files.
+
+    Returns:
+        InstallResult with ``cleaned`` listing removed skills and ``errors``
+        listing any I/O failures.
+
+    Raises:
+        ConfigError:   Invalid agent or missing --dest for custom agent.
+        InstallError:  *name* matches skills under multiple prefixes and
+                       *prefix* was not supplied to disambiguate.
+        ManifestError: Manifest could not be read or written.
+    """
+    dest_path = resolve_dest(agent, dest)
+    manifest = read_manifest(dest_path)
+    if manifest is None:
+        return InstallResult()
+
+    matches: dict[str, object] = {
+        k: v
+        for k, v in manifest.skills.items()
+        if _key_matches(k, name, prefix)
+    }
+
+    if not matches:
+        return InstallResult()
+
+    # Ambiguity guard: --name without --prefix must resolve to a single prefix.
+    if name is not None and prefix is None:
+        unique_prefixes = {_parse_skill_key(k)[0] for k in matches}
+        if len(unique_prefixes) > 1:
+            raise InstallError(
+                f"Name '{name}' is ambiguous — found skills under multiple prefixes: "
+                + ", ".join(sorted(unique_prefixes))
+                + ". Re-run with --prefix to narrow the selection."
+            )
+
+    result = InstallResult()
+
+    for dest_rel in list(matches):
+        if dry_run:
+            result.cleaned.append(dest_rel)
+            continue
+        try:
+            skill_dir = dest_path / dest_rel
+            if skill_dir.exists():
+                shutil.rmtree(str(skill_dir))
+            remove_manifest_skill(manifest, dest_rel)
+            result.cleaned.append(dest_rel)
+            logger.info("removed   %s", dest_rel)
+        except OSError as exc:
+            result.errors.append(f"{dest_rel}: {exc}")
+            logger.error("error removing '%s': %s", dest_rel, exc)
+
+    if not dry_run and result.cleaned:
+        write_manifest(dest_path, manifest)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Public API: doctor
 # ---------------------------------------------------------------------------
 
