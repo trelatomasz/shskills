@@ -36,6 +36,8 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist
+          verbose: true
+          skip-existing: true
 #      - name: Publish to PyPI
 #        uses: pypa/gh-action-pypi-publish@release/v1
         # Uses OIDC trusted publishing — no API token required.
