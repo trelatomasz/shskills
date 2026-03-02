@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -10,7 +9,6 @@ import pytest
 
 from shskills.core.fetcher import _is_commit_sha, _run, _sparse_target
 from shskills.exceptions import FetchError
-
 
 # ---------------------------------------------------------------------------
 # _is_commit_sha
@@ -101,12 +99,12 @@ class TestFetchSkillsTree:
 
         from shskills.models import SkillSource
 
-        with patch("shskills.core.fetcher._run", side_effect=fake_run):
-            with pytest.raises(FetchError, match="not found"):
-                with fetch_skills_tree(
-                    SkillSource(url="https://example.com/repo.git", ref="main")
-                ) as _:
-                    pass
+        with (
+            patch("shskills.core.fetcher._run", side_effect=fake_run),
+            pytest.raises(FetchError, match="not found"),
+            fetch_skills_tree(SkillSource(url="https://example.com/repo.git", ref="main")) as _,
+        ):
+            pass
 
     def test_yields_correct_path(self, tmp_path: Path) -> None:
         """Context manager yields the expected SKILLS path when it exists."""
@@ -125,9 +123,11 @@ class TestFetchSkillsTree:
 
         from shskills.models import SkillSource
 
-        with patch("shskills.core.fetcher._run", side_effect=fake_run):
-            with fetch_skills_tree(SkillSource(url="https://example.com/repo.git", ref="main")) as p:
-                created_skills_path.append(p)
+        with (
+            patch("shskills.core.fetcher._run", side_effect=fake_run),
+            fetch_skills_tree(SkillSource(url="https://example.com/repo.git", ref="main")) as p,
+        ):
+            created_skills_path.append(p)
 
         assert len(created_skills_path) == 1
         assert created_skills_path[0].name == "SKILLS"
@@ -149,10 +149,12 @@ class TestFetchSkillsTree:
 
         from shskills.models import SkillSource
 
-        with pytest.raises(FetchError):
-            with patch("shskills.core.fetcher._run", side_effect=fake_run):
-                with fetch_skills_tree(SkillSource(url="https://example.com/r.git", ref="main")) as _:
-                    pass
+        with (
+            pytest.raises(FetchError),
+            patch("shskills.core.fetcher._run", side_effect=fake_run),
+            fetch_skills_tree(SkillSource(url="https://example.com/r.git", ref="main")) as _,
+        ):
+            pass
 
         # The tmpdir should have been cleaned up by TemporaryDirectory context manager
         if seen_tmpdirs:

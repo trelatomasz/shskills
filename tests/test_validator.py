@@ -130,7 +130,7 @@ class TestAssertPathSafe:
     def test_empty_segment_raises(self) -> None:
         # Construct a Path with an empty segment by using PurePosixPath directly
         from pathlib import PurePosixPath
-        p = Path(str(PurePosixPath("some//path")))  # double-slash normalizes, skip
+        Path(str(PurePosixPath("some//path")))  # double-slash normalizes, skip
         # Test via string with explicit empty part — validate our frozenset logic
         from shskills.core.validator import _UNSAFE_SEGMENTS
         assert ".." in _UNSAFE_SEGMENTS

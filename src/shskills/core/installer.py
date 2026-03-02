@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import shutil  # used by execute_plan --clean path
-from datetime import datetime, timezone
 from pathlib import Path
 
 from shskills.adapters.base import AgentAdapter
@@ -304,9 +303,7 @@ def _key_matches(dest_rel: str, name: str | None, prefix: str | None) -> bool:
     prefix_part, skill_part = _parse_skill_key(dest_rel)
     if name is not None and skill_part != name:
         return False
-    if prefix is not None and not prefix_part.startswith(prefix):
-        return False
-    return True
+    return prefix is None or prefix_part.startswith(prefix)
 
 
 def uninstall(

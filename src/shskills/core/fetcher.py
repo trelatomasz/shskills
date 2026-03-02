@@ -12,7 +12,6 @@ from shskills.config import SKILLS_ROOT
 from shskills.exceptions import FetchError
 from shskills.models import SkillSource
 
-
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------

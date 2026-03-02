@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
+from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
-from rich import print as rprint
 
 from shskills._version import __version__
 from shskills.config import DEFAULT_REF, KNOWN_AGENTS
@@ -40,7 +40,7 @@ _AgentArg = Annotated[
     ),
 ]
 _DestArg = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--dest",
         "-d",
@@ -73,7 +73,7 @@ def   cmd_install(
     url: Annotated[str, typer.Option("--url", "-u", help="Git repository URL.")],
     agent: _AgentArg = "claude",
     subpath: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--subpath", "-s", help="Path relative to SKILLS/ to install."),
     ] = None,
     ref: Annotated[
@@ -185,7 +185,7 @@ def cmd_list(
         typer.Option("--url", "-u", help="Git repository URL.")]
     = "git@github.com:trelatomasz/shareable-skills.git",
     subpath: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--subpath", "-s", help="Path relative to SKILLS/ to list."),
     ] = None,
     ref: Annotated[
@@ -326,11 +326,11 @@ def cmd_uninstall(
     agent: _AgentArg = "claude",
     dest: _DestArg = None,
     name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--name", "-n", help="Skill name to remove (part after '__')."),
     ] = None,
     prefix: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--prefix",
             "-p",

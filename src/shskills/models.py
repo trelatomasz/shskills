@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 # ---------------------------------------------------------------------------
 # Source / discovery
@@ -61,7 +60,7 @@ class SkillInfo(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class InstallActionKind(str, Enum):
+class InstallActionKind(StrEnum):
     INSTALL = "install"
     UPDATE = "update"
     SKIP = "skip"
@@ -119,7 +118,7 @@ class Manifest(BaseModel):
     agent: str
     dest: str
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(UTC)
     )
     source: SkillSource
     skills: dict[str, InstalledSkill] = {}
@@ -153,7 +152,7 @@ class InstallResult(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class DoctorSeverity(str, Enum):
+class DoctorSeverity(StrEnum):
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"

@@ -11,12 +11,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from shskills import install
 from shskills.config import MANIFEST_FILENAME
 from shskills.core.manifest import read_manifest
-
 
 # ---------------------------------------------------------------------------
 # Helper
@@ -284,7 +281,7 @@ class TestSubdirectoryFiles:
 
         from tests.conftest import write_skill
 
-        skill_dir = write_skill(
+        write_skill(
             repo / "SKILLS" / "common",
             "prompt_skill",
             extra_files={"hooks/run.py": "print('hello from hook')"},

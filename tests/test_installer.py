@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -21,7 +20,6 @@ from shskills.models import (
     SkillSource,
 )
 from tests.conftest import write_skill
-
 
 # ---------------------------------------------------------------------------
 # config.resolve_dest
@@ -76,7 +74,9 @@ def _make_manifest(dest: Path, skills: dict[str, str] | None = None) -> Manifest
         source=SkillSource(url="https://example.com/r", ref="main"),
     )
     for dest_rel, sha in (skills or {}).items():
-        update_manifest_skill(m, dest_rel, dest_rel, dest_rel, str(dest / dest_rel), sha, ["SKILL.md"])
+        update_manifest_skill(  # noqa: E501
+            m, dest_rel, dest_rel, dest_rel, str(dest / dest_rel), sha, ["SKILL.md"]
+        )
     return m
 
 
@@ -354,7 +354,7 @@ class TestInstallPublicApi:
         skill = _make_skill(src, "skill_a")
 
         # Pre-install with a different sha so a conflict is guaranteed
-        from shskills.core.manifest import write_manifest, update_manifest_skill
+        from shskills.core.manifest import write_manifest
         manifest = _make_manifest(dest, {skill.rel_path: "old_sha"})
         write_manifest(dest, manifest)
 
@@ -388,7 +388,7 @@ class TestInstallPublicApi:
 class TestDoctorPublicApi:
     def test_healthy_when_files_match(self, tmp_path: Path) -> None:
         from shskills import doctor
-        from shskills.core.manifest import write_manifest, update_manifest_skill
+        from shskills.core.manifest import update_manifest_skill, write_manifest
         from shskills.core.validator import compute_skill_sha256, list_skill_files
 
         dest = tmp_path / "dest"
@@ -412,7 +412,7 @@ class TestDoctorPublicApi:
 
     def test_error_when_skill_dir_missing(self, tmp_path: Path) -> None:
         from shskills import doctor
-        from shskills.core.manifest import write_manifest, update_manifest_skill
+        from shskills.core.manifest import update_manifest_skill, write_manifest
         from shskills.models import DoctorSeverity
 
         dest = tmp_path / "dest"
@@ -429,7 +429,7 @@ class TestDoctorPublicApi:
 
     def test_warning_when_sha_mismatch(self, tmp_path: Path) -> None:
         from shskills import doctor
-        from shskills.core.manifest import write_manifest, update_manifest_skill
+        from shskills.core.manifest import update_manifest_skill, write_manifest
         from shskills.models import DoctorSeverity
 
         dest = tmp_path / "dest"

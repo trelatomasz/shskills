@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from shskills.config import MANIFEST_FILENAME
 from shskills.exceptions import ManifestError
-from shskills.models import InstalledSkill, Manifest, SkillSource
-
+from shskills.models import InstalledSkill, Manifest
 
 # ---------------------------------------------------------------------------
 # Read
@@ -64,10 +64,8 @@ def write_manifest(dest: Path, manifest: Manifest) -> None:
                 fh.write(serialized)
             os.replace(tmp_path, str(manifest_path))
         except Exception:
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(tmp_path)
-            except OSError:
-                pass
             raise
     except Exception as exc:
         raise ManifestError(
@@ -95,16 +93,16 @@ def update_manifest_skill(
         source_path=source_path,
         dest_path=dest_path,
         content_sha256=sha256,
-        installed_at=datetime.now(timezone.utc),
+        installed_at=datetime.now(UTC),
         files=files,
     )
-    manifest.updated_at = datetime.now(timezone.utc)
+    manifest.updated_at = datetime.now(UTC)
 
 
 def remove_manifest_skill(manifest: Manifest, dest_rel: str) -> None:
     """Remove an InstalledSkill record from *manifest* in-place."""
     manifest.skills.pop(dest_rel, None)
-    manifest.updated_at = datetime.now(timezone.utc)
+    manifest.updated_at = datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------

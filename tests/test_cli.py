@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from shskills._version import __version__
@@ -19,7 +19,6 @@ from shskills.models import (
     InstallResult,
     SkillFrontmatter,
     SkillInfo,
-    SkillSource,
 )
 
 runner = CliRunner()
@@ -230,7 +229,7 @@ class TestInstalledCommand:
         assert "No skills" in result.output
 
     def test_shows_table_when_skills_present(self, tmp_path: Path) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         mock_skills = [
             InstalledSkill(
@@ -238,7 +237,7 @@ class TestInstalledCommand:
                 source_path="common/welcome_note",
                 dest_path=".claude/skills/welcome_note",
                 content_sha256="a" * 64,
-                installed_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                installed_at=datetime(2026, 1, 1, tzinfo=UTC),
                 files=["SKILL.md"],
             )
         ]

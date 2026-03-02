@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from shskills.adapters import get_adapter
-from shskills.adapters.base import AgentAdapter
 from shskills.adapters.claude import ClaudeAdapter
 from shskills.adapters.codex import CodexAdapter
 from shskills.adapters.custom import CustomAdapter

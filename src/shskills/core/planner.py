@@ -6,7 +6,7 @@ import logging
 import re
 from pathlib import Path
 
-from shskills.config import SKILL_MARKER, SKILLS_ROOT
+from shskills.config import SKILL_MARKER
 from shskills.core.fetcher import fetch_skills_tree
 from shskills.core.validator import validate_skill_dir
 from shskills.exceptions import ValidationError
